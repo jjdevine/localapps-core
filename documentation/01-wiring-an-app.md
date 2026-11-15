@@ -171,3 +171,7 @@ def fresh_database(monkeypatch):
 ```
 
 `Auth` methods also take a `path` argument for a single call against another file.
+
+## Push notifications
+
+An app that notifies the phone has a few more lines to write: [03 Push notifications](03-push-notifications.md) is the recipe.

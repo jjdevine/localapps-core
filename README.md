@@ -1,6 +1,6 @@
 # localapps-core
 
-The parts every small self-hosted FastAPI + SQLite app repeats, written once: a one-password login with a long-lived cookie, secrets in `.env`, settings, the database engine, migrations at start-up, a `/health` route, and backup and restore.
+The parts every small self-hosted FastAPI + SQLite app repeats, written once: a one-password login with a long-lived cookie, secrets in `.env`, settings, the database engine, migrations at start-up, a `/health` route, backup and restore, and push notifications.
 
 It is for apps of one particular shape: a single user or household, one SQLite file, server-rendered pages, run as a service on a home server behind a reverse proxy. It is not a framework; an app stays an ordinary FastAPI application and uses whichever parts it wants.
 
@@ -10,9 +10,11 @@ Pin an exact tag in the app's `pyproject.toml`:
 
 ```toml
 dependencies = [
-    "localapps-core @ git+https://github.com/jjdevine/localapps-core.git@v0.1.0",
+    "localapps-core @ git+https://github.com/jjdevine/localapps-core.git@v0.2.0",
 ]
 ```
+
+An app that sends push notifications asks for the extra that installs `pywebpush`: `"localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.0"`.
 
 A fix is made once here and released as a new tag; each app then moves to it in a one-line change, so each app's own tests run against the new version before it is deployed.
 
@@ -27,13 +29,15 @@ A fix is made once here and released as a new tag; each app then moves to it in 
 | `localapps_core.migrations` | `Migrations`: run Alembic to head on the app's engine, report the current and newest revision |
 | `localapps_core.backup` | `Backups`: `VACUUM INTO` copies with an optional export beside each, pruning, listing, restore |
 | `localapps_core.cli` | `set_password_main`: set or clear the password from a terminal |
+| `localapps_core.push` | `Push`: Web Push to the browsers that asked for it; the VAPID key in `.env`, the subscription table on the app's own metadata, sending with stale subscriptions cleared, and a once-per-time check for reminders |
 | `localapps_core.web.auth` | `Login`: the `/login` and `/logout` routes and the middleware that requires the login |
 | `localapps_core.web.health` | `health_router`: `/health`, 200 at the newest migration and 503 otherwise |
+| `localapps_core.web.push` | `push_router`, `push_api_router`: the routes that turn a device on or off and send a test, and the two scripts a browser needs (the page script and the service-worker handlers) |
 | `localapps_core.web.launcher` | `run`: serve the app with uvicorn on the configured host and port |
 
 Only `localapps_core.web` imports FastAPI, so an app's business logic can use the rest without the web framework.
 
-[documentation/01-wiring-an-app.md](documentation/01-wiring-an-app.md) shows the few lines each part needs in an app. [documentation/02-how-it-works.md](documentation/02-how-it-works.md) explains the login, the backups and the health check.
+[documentation/01-wiring-an-app.md](documentation/01-wiring-an-app.md) shows the few lines each part needs in an app. [documentation/02-how-it-works.md](documentation/02-how-it-works.md) explains the login, the backups and the health check. [documentation/03-push-notifications.md](documentation/03-push-notifications.md) is the recipe for adding push notifications to an app, and how they work.
 
 ## Development
 
