@@ -16,7 +16,13 @@ from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import Engine
+from sqlalchemy import Connection, Engine
+
+
+def _dangling_rows(conn: Connection) -> set[tuple[str, str, int | None]]:
+    """Every row that breaks a foreign key, as (its table, the table it points at, its rowid)."""
+    rows = conn.exec_driver_sql("PRAGMA foreign_key_check").all()
+    return {(str(row[0]), str(row[2]), row[1]) for row in rows}
 
 
 class Migrations:
@@ -47,10 +53,40 @@ class Migrations:
         return current is not None and current == self.head_revision()
 
     def upgrade(self, engine: Engine, revision: str = "head") -> None:
+        """Run the migrations up to `revision`, with SQLite's foreign keys switched off.
+
+        Many changes to a table can only be made on SQLite by building the table again:
+        Alembic's batch mode copies the rows to a new table, drops the old one and renames
+        the copy. With foreign keys on, dropping the old table deletes its rows first, and
+        every row elsewhere that points at one of them `ON DELETE CASCADE` goes with it. So
+        the keys are off while the migrations run, as SQLite's own instructions for changing
+        a table say, and the upgrade fails if it left a row pointing at nothing.
+        """
         cfg = self.alembic_config()
-        with engine.begin() as conn:
-            cfg.attributes["connection"] = conn
-            command.upgrade(cfg, revision)
+        with engine.connect() as conn:
+            sqlite = conn.dialect.name == "sqlite"
+            if sqlite:
+                # Outside a transaction: inside one SQLite ignores this pragma.
+                conn.exec_driver_sql("PRAGMA foreign_keys=OFF")
+                conn.commit()
+            try:
+                with conn.begin():
+                    before = _dangling_rows(conn) if sqlite else set()
+                    cfg.attributes["connection"] = conn
+                    command.upgrade(cfg, revision)
+                    left = (_dangling_rows(conn) if sqlite else set()) - before
+                    if left:
+                        tables = ", ".join(sorted({f"{row[0]} (to {row[1]})" for row in left}))
+                        raise RuntimeError(
+                            f"the migrations left {len(left)} rows pointing at rows that are "
+                            f"not there: {tables}"
+                        )
+            finally:
+                if sqlite:
+                    # The connection goes back to the pool, so it is put back as it was.
+                    conn.rollback()
+                    conn.exec_driver_sql("PRAGMA foreign_keys=ON")
+                    conn.commit()
 
     def upgrade_to_head(self, engine: Engine) -> None:
         self.upgrade(engine, "head")

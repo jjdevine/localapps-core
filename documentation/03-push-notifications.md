@@ -12,7 +12,7 @@ Sending needs `pywebpush`, which only an app that notifies should have to instal
 
 ```toml
 dependencies = [
-    "localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.0",
+    "localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.1",
 ]
 ```
 

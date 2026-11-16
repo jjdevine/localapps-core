@@ -10,11 +10,11 @@ Pin an exact tag in the app's `pyproject.toml`:
 
 ```toml
 dependencies = [
-    "localapps-core @ git+https://github.com/jjdevine/localapps-core.git@v0.2.0",
+    "localapps-core @ git+https://github.com/jjdevine/localapps-core.git@v0.2.1",
 ]
 ```
 
-An app that sends push notifications asks for the extra that installs `pywebpush`: `"localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.0"`.
+An app that sends push notifications asks for the extra that installs `pywebpush`: `"localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.1"`.
 
 A fix is made once here and released as a new tag; each app then moves to it in a one-line change, so each app's own tests run against the new version before it is deployed.
 

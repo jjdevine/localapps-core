@@ -113,3 +113,95 @@ def test_migrations(project: Project) -> None:
     migrations.upgrade_to_head(engine)  # running it again is harmless
     project.add_note("still works")
     assert project.notes() == ["still works"]
+
+
+REVISION_TAGS = '''
+"""tags, each deleted with its note"""
+import sqlalchemy as sa
+from alembic import op
+
+revision = "0003"
+down_revision = "0002"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.create_table(
+        "tags",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("note_id", sa.Integer, sa.ForeignKey("notes.id", ondelete="CASCADE")),
+        sa.Column("label", sa.String, nullable=False),
+    )
+'''
+
+REVISION_REBUILD = '''
+"""a change SQLite can only make by building the notes table again"""
+import sqlalchemy as sa
+from alembic import op
+
+revision = "0004"
+down_revision = "0003"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    with op.batch_alter_table("notes") as batch:
+        batch.alter_column("body", existing_type=sa.String, type_=sa.Text)
+'''
+
+REVISION_ORPHANS = '''
+"""deletes the notes and leaves their tags pointing at nothing"""
+from alembic import op
+
+revision = "0004"
+down_revision = "0003"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.execute("DELETE FROM notes")
+'''
+
+
+def note_with_a_tag(project: Project, last_revision: str) -> None:
+    versions = project.root / "alembic" / "versions"
+    (versions / "0003_tags.py").write_text(REVISION_TAGS, encoding="utf-8")
+    (versions / "0004_last.py").write_text(last_revision, encoding="utf-8")
+    project.migrations.upgrade(project.database.get_engine(), "0003")
+    project.add_note("kept")
+    with project.database.get_session_factory()() as session:
+        session.execute(text("insert into tags (note_id, label) values (1, 'x')"))
+        session.commit()
+
+
+def count(project: Project, table: str) -> int:
+    with project.database.get_session_factory()() as session:
+        return int(session.execute(text(f"select count(*) from {table}")).scalar_one())
+
+
+def test_rebuilding_a_table_keeps_the_rows_that_point_at_it(project: Project) -> None:
+    note_with_a_tag(project, REVISION_REBUILD)
+    engine = project.database.get_engine()
+    project.migrations.upgrade_to_head(engine)
+    assert project.migrations.current_revision(engine) == "0004"
+    assert project.notes() == ["kept"]
+    assert count(project, "tags") == 1  # dropping the old notes table did not cascade
+
+    # Foreign keys are back on afterwards, on the connection the upgrade used as on any other.
+    with engine.connect() as conn:
+        assert conn.execute(text("PRAGMA foreign_keys")).scalar() == 1
+        conn.execute(text("delete from notes"))
+        conn.commit()
+    assert count(project, "tags") == 0
+
+
+def test_an_upgrade_that_leaves_rows_pointing_at_nothing_fails(project: Project) -> None:
+    note_with_a_tag(project, REVISION_ORPHANS)
+    engine = project.database.get_engine()
+    with pytest.raises(RuntimeError, match="tags"):
+        project.migrations.upgrade_to_head(engine)
+    with engine.connect() as conn:
+        assert conn.execute(text("PRAGMA foreign_keys")).scalar() == 1
