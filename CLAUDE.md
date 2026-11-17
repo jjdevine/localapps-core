@@ -8,4 +8,4 @@
 - A module belongs here when more than one app needs it. Anything only one app needs stays in that app.
 - Before finishing: `pytest`, `ruff check .`, `ruff format --check .`, `mypy` all clean.
 - Use `.venv\Scripts\python`; do not install `uv`.
-- Never commit, tag or push unless asked.
+- **Committing depends on where the session runs.** In Claude Code on the web (the environment variable `CLAUDE_CODE_REMOTE` is `true`), every requested change is committed, pushed to its own branch and opened as a pull request into `main`, without being asked, and nothing is pushed to `main` directly. On the owner's PC, never commit or push unless asked. Either way, never tag unless asked: a tag is a release.
