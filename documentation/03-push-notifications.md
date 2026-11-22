@@ -12,7 +12,7 @@ Sending needs `pywebpush`, which only an app that notifies should have to instal
 
 ```toml
 dependencies = [
-    "localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.1",
+    "localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.2",
 ]
 ```
 
@@ -262,7 +262,7 @@ A browser that turns notifications on asks its push service (the browser maker's
 
 ### Sending
 
-`push.send(session, message)` POSTs to each device in turn through `push.deliver`, with a 10-second timeout on each. The device receives the JSON `{title, body, url, tag}`; the time to live goes to the push service.
+`push.send(session, message)` POSTs to each device in turn through `push.deliver`, with a 10-second timeout on each. The device receives the JSON `{title, body, url, tag}`; the time to live goes to the push service. Every message is sent with `Urgency: high` (`URGENCY`), which asks the push service to wake the device for it. At the default urgency a phone that is idle holds a message until it next wakes, which can be after the time to live has run out, so the message is late or never shown.
 
 | What the push service says | What happens |
 | --- | --- |

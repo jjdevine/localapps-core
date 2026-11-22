@@ -44,6 +44,10 @@ log = logging.getLogger(__name__)
 TABLE_NAME = "push_subscriptions"
 GONE_STATUSES = frozenset({404, 410})  # the push service says the subscription no longer exists
 TIMEOUT_SECONDS = 10.0  # for each POST to a push service
+# Every message is one its owner is to see when it is sent, so the push service is asked to
+# wake the device for it (RFC 8030). At the default, "normal", a phone that is idle holds a
+# message until it next wakes, which can be after the message's time to live has run out.
+URGENCY = "high"
 TEST_TTL = 60  # a test message is not worth holding for a phone that is off
 MAX_FIELD_LENGTH = 2000  # endpoints run to a few hundred characters; keys to under a hundred
 REMINDER_WINDOW = timedelta(hours=3)  # a reminder not sent within this long of its time is skipped
@@ -317,6 +321,7 @@ class Push[S: SubscriptionColumns | TextSubscriptionColumns]:
             vapid_private_key=private_key,
             vapid_claims={"sub": self.contact()},
             ttl=ttl,
+            headers={"Urgency": URGENCY},
             timeout=TIMEOUT_SECONDS,
         )
 

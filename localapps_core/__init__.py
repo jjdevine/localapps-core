@@ -4,4 +4,4 @@ Nothing outside `localapps_core.web` imports FastAPI, so an app's business logic
 login, database, migration, backup and push code without pulling the web framework in.
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"

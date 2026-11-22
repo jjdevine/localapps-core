@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localapps-core"
-version = "0.2.1"
+version = "0.2.2"
 description = "The parts every small self-hosted FastAPI + SQLite app repeats: one-password login, .env secrets, database set-up, migrations at start-up, /health, backups, push notifications."
 readme = "README.md"
 requires-python = ">=3.12"

@@ -334,6 +334,7 @@ def test_deliver_posts_once_with_the_key_the_claim_and_a_timeout(
         "vapid_private_key": kit.push.vapid_private_key(),
         "vapid_claims": {"sub": CONTACT},
         "ttl": 90,
+        "headers": {"Urgency": "high"},  # or an idle phone holds the message until it wakes
         "timeout": TIMEOUT_SECONDS,
     }
     assert TIMEOUT_SECONDS == 10.0
