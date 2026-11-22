@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localapps-core"
-version = "0.2.2"
-description = "The parts every small self-hosted FastAPI + SQLite app repeats: one-password login, .env secrets, database set-up, migrations at start-up, /health, backups, push notifications."
+version = "0.3.0"
+description = "The parts every small self-hosted FastAPI + SQLite app repeats: one-password login, .env secrets, database set-up, migrations at start-up, /health, backups, push notifications, the Claude API key."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -24,8 +24,13 @@ dependencies = [
 push = [
     "pywebpush>=2.0",
 ]
+# Only an app that asks the Claude API for something (localapps_core.claude) needs this one.
+claude = [
+    "anthropic>=2.0",
+]
 dev = [
     "pywebpush>=2.0",
+    "anthropic>=2.0",
     "pytest>=8",
     "httpx>=0.27",
     "ruff>=0.6",

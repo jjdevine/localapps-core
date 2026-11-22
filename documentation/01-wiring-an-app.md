@@ -175,3 +175,7 @@ def fresh_database(monkeypatch):
 ## Push notifications
 
 An app that notifies the phone has a few more lines to write: [03 Push notifications](03-push-notifications.md) is the recipe.
+
+## The Claude API
+
+An app that asks Claude for something keeps its key and makes its client with the package: [04 The Claude API](04-the-claude-api.md) is the recipe.

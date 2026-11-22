@@ -1,6 +1,6 @@
 # localapps-core
 
-The parts every small self-hosted FastAPI + SQLite app repeats, written once: a one-password login with a long-lived cookie, secrets in `.env`, settings, the database engine, migrations at start-up, a `/health` route, backup and restore, and push notifications.
+The parts every small self-hosted FastAPI + SQLite app repeats, written once: a one-password login with a long-lived cookie, secrets in `.env`, settings, the database engine, migrations at start-up, a `/health` route, backup and restore, push notifications, and the key for the Claude API.
 
 It is for apps of one particular shape: a single user or household, one SQLite file, server-rendered pages, run as a service on a home server behind a reverse proxy. It is not a framework; an app stays an ordinary FastAPI application and uses whichever parts it wants.
 
@@ -10,11 +10,11 @@ Pin an exact tag in the app's `pyproject.toml`:
 
 ```toml
 dependencies = [
-    "localapps-core @ git+https://github.com/jjdevine/localapps-core.git@v0.2.2",
+    "localapps-core @ git+https://github.com/jjdevine/localapps-core.git@v0.3.0",
 ]
 ```
 
-An app that sends push notifications asks for the extra that installs `pywebpush`: `"localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.2.2"`.
+An app that asks the Claude API for something asks for the `claude` extra, which installs Anthropic's SDK. An app that sends push notifications asks for the extra that installs `pywebpush`: `"localapps-core[push] @ git+https://github.com/jjdevine/localapps-core.git@v0.3.0"`.
 
 A fix is made once here and released as a new tag; each app then moves to it in a one-line change, so each app's own tests run against the new version before it is deployed.
 
@@ -30,6 +30,7 @@ A fix is made once here and released as a new tag; each app then moves to it in 
 | `localapps_core.backup` | `Backups`: `VACUUM INTO` copies with an optional export beside each, pruning, listing, restore |
 | `localapps_core.cli` | `set_password_main`: set or clear the password from a terminal |
 | `localapps_core.push` | `Push`: Web Push to the browsers that asked for it; the VAPID key in `.env`, the subscription table on the app's own metadata, sending with stale subscriptions cleared, and a once-per-time check for reminders |
+| `localapps_core.claude` | `Claude`: the app's own Claude API key in `.env`, set from its Settings page and shown only by its last four characters; the SDK's client made with it; the models on offer; what went wrong in words for the page; tests kept off the network |
 | `localapps_core.web.auth` | `Login`: the `/login` and `/logout` routes and the middleware that requires the login |
 | `localapps_core.web.health` | `health_router`: `/health`, 200 at the newest migration and 503 otherwise |
 | `localapps_core.web.push` | `push_router`, `push_api_router`: the routes that turn a device on or off and send a test, and the two scripts a browser needs (the page script and the service-worker handlers) |
